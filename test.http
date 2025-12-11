@@ -1,0 +1,19 @@
+# create user
+POST https://quickpizza.grafana.com/api/users
+Content-Type: application/json
+
+{
+  "username": "joheiss-12345",
+  "password": "topSecret"
+}
+
+###
+
+# login user
+POST https://quickpizza.grafana.com/login
+Content-Type: application/json
+
+{
+  "user": "joheiss-12345",
+  "password": "topSecret"
+}

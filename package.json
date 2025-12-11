@@ -1,0 +1,30 @@
+{
+  "name": "k6-ts-primer",
+  "private": true,
+  "version": "1.0.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "npm run build && k6 run dist/tests/test.cjs",
+    "test:smoke": "npm run build && k6 run dist/tests/smoke-test.cjs",
+    "test:load": "npm run build && k6 run dist/tests/load-test.cjs --summary-mode=full",
+    "test:stress": "npm run build && k6 run dist/tests/stress-test.cjs",
+     "test:spike": "npm run build && k6 run dist/tests/spike-test.cjs",
+     "test:breakpoint": "npm run build && k6 run dist/tests/breakpoint-test.cjs",
+     "test:soak": "npm run build && k6 run dist/tests/soak-test.cjs",
+     "test:api": "npm run build && k6 run dist/tests/api-test.cjs --http-debug=full"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^10.1.0",
+    "@rollup/plugin-babel": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@types/k6": "^1.4.0",
+    "fast-glob": "^3.3.3",
+    "rollup-plugin-copy": "^3.5.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4"
+  }
+}

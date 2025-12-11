@@ -1,0 +1,11 @@
+@baseUrl=http://localhost:8000
+# get all crocodiles
+GET {{baseUrl}}/public/crocodiles
+Accept: application/json
+
+###
+# get one crocodile
+GET {{baseUrl}}/public/crocodiles/1
+Accept: application/json
+
+###
