@@ -1,10 +1,40 @@
 import { faker } from "@faker-js/faker/locale/de";
 import { check, group, sleep, type JSONArray } from "k6";
+import { SharedArray } from "k6/data";
 import http from "k6/http";
 import type { Options } from "k6/options";
+import Papa, { type ParseResult } from "papaparse";
 
-const baseUrl = "http://localhost:8000";
-const mailpitUrl = "http://localhost:8025";
+let baseUrl = __ENV.BASE_URL ?? "http://localhost:8000";
+let mailpitUrl = __ENV.MAILPIT_URL ?? "http://localhost:8025";
+
+// type Crocodile = {
+//   id: number;
+//   name: string;
+//   sex: string;
+//   dateOfBirth: string;
+// };
+
+const sharedArrayForUsers: any[] = new SharedArray("data", () => {
+  // Load data from a JSON file or define it directly
+  return JSON.parse(open("./data/users.json"));
+});
+const sharedArrayForCrocodiles: any[] = new SharedArray("crocodiles", () => {
+  const csv: string = open("./data/crocodiles.csv");
+
+  const parsed = Papa.parse<ParseResult<any>>(csv, {
+    delimiter: ",",
+    dynamicTyping: true,
+    header: true,
+    skipEmptyLines: true,
+  });
+
+  const { data } = parsed;
+  return data;
+});
+
+console.log("Shared users data:", sharedArrayForUsers);
+console.log("Shared crocodiles data:", sharedArrayForCrocodiles);
 
 export const options: Options = {
   vus: 1,
@@ -15,39 +45,48 @@ export const options: Options = {
 export default function () {
   // get all crocodiles
   const count = getAllCrocodiles();
-  sleep(1);
+  sleep(randomIntBetween(1, 1));
+
   // get crocodile by id
   const randId = Math.floor(Math.random() * 10 + 1);
   const crocodileId = Math.min(count, randId);
   console.log("Fetching crocodile with ID:", crocodileId);
   const crocodile = getCrocodileById(crocodileId);
   console.log("Fetched crocodile:", crocodile);
-  sleep(1);
+  sleep(randomIntBetween(1, 20));
+
   // register new user
-  const user = registerNewUser();
+  const user = registerNewUser(randomItem(sharedArrayForUsers));
   console.log("Registered user:", user);
-  sleep(1);
+  sleep(randomIntBetween(1, 1));
+
   // login with the new user
   const accessToken = loginUser(user.username, user.password);
   console.log("Logged in user, access token:", accessToken);
-  sleep(1);
+  sleep(randomIntBetween(1, 1));
+
   // send test email
   const subject = sendEmail(user.email, "k6 API Test Email");
-  sleep(1);
+  sleep(randomIntBetween(1, 1));
+
   const emailId = findEmailByToAndSubject(user.email, subject);
   console.log("Email ID:", emailId);
-  sleep(1);
+  sleep(randomIntBetween(1, 1));
+
   // get full email by Id
   const otp = getOtpFromEmail(emailId);
   console.log("Extracted OTP from email:", otp);
-  sleep(1);
+  sleep(randomIntBetween(1, 1));
+
   // add my crocodile with auth token
   const myCrocodile = addMyCrocodile(accessToken);
   console.log("Added my crocodile:", myCrocodile);
-  sleep(1);
+  sleep(randomIntBetween(1, 1));
+
   // get all my crocodiles with auth token
   getMyCrocodiles(accessToken);
-  sleep(1);
+  sleep(randomIntBetween(1, 1));
+
   // get my crocodile by id with auth token
   console.log("Fetching my crocodile with ID:", myCrocodile.id);
   const found = getMyCrocodileById(myCrocodile.id, accessToken);
@@ -66,7 +105,7 @@ export default function () {
   console.log("Updated my crocodile's name:", nameUpdated);
   // delete my crocodile by id
   deleteMyCrocodileById(myCrocodile.id, accessToken);
-  sleep(1);
+  sleep(randomIntBetween(1, 1));
 }
 
 // get all crocodiles and return the count
@@ -117,7 +156,7 @@ const getCrocodileById = (crocodileId: number): any => {
   return crocodile;
 };
 
-const registerNewUser = (): any => {
+const registerNewUser = (user: any): any => {
   const first_name = faker.person.firstName();
   const last_name = faker.person.lastName();
   const username = faker.internet.username({
@@ -128,7 +167,7 @@ const registerNewUser = (): any => {
     firstName: first_name,
     lastName: last_name,
   });
-  const password = "password";
+  const password = user.password ?? "password";
 
   // register new user
   group("Register a new user", () => {
@@ -139,6 +178,7 @@ const registerNewUser = (): any => {
       email,
       password,
     });
+    console.log("Register payload:", payload);
     const requestParams = {
       headers: {
         "Content-Type": "application/json",
@@ -425,4 +465,13 @@ const deleteMyCrocodileById = (id: number, accessToken: string): any => {
       "status is 204": (r) => r.status === 204,
     });
   });
+};
+
+const randomIntBetween = (min: number, max: number): number => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+const randomItem = (array: any[]): any => {
+  const index = Math.floor(Math.random() * array.length);
+  return array[index];
 };
